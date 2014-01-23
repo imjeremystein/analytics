@@ -1,5 +1,7 @@
 class CampaignsController < ApplicationController
   before_action :set_campaign, only: [:show, :edit, :update, :destroy]
+  before_action :correct_user, only: [:show, :edit, :update, :destroy]
+  before_action :authenticate_user!
 
   # GET /campaigns
   # GET /campaigns.json
@@ -14,7 +16,7 @@ class CampaignsController < ApplicationController
 
   # GET /campaigns/new
   def new
-    @campaign = Campaign.new
+    @campaign = current_user.campaigns.build
   end
 
   # GET /campaigns/1/edit
@@ -24,7 +26,7 @@ class CampaignsController < ApplicationController
   # POST /campaigns
   # POST /campaigns.json
   def create
-    @campaign = Campaign.new(campaign_params)
+    @campaign = current_user.campaigns.build(campaign_params)
 
     respond_to do |format|
       if @campaign.save
@@ -45,8 +47,7 @@ class CampaignsController < ApplicationController
         format.html { redirect_to @campaign, notice: 'Campaign was successfully updated.' }
         format.json { head :no_content }
       else
-        format.html { render action: 'edit' }
-        format.json { render json: @campaign.errors, status: :unprocessable_entity }
+        render action: 'edit'
       end
     end
   end
@@ -55,9 +56,8 @@ class CampaignsController < ApplicationController
   # DELETE /campaigns/1.json
   def destroy
     @campaign.destroy
-    respond_to do |format|
-      format.html { redirect_to campaigns_url }
-      format.json { head :no_content }
+    redirect_to campaigns_url
+      
     end
   end
 
@@ -67,8 +67,13 @@ class CampaignsController < ApplicationController
       @campaign = Campaign.find(params[:id])
     end
 
+    def correct_user
+      @campaign = current_user.campaigns.find_by(id: params[:id])
+      redirect_to campaigns_path, notice: "Not authorized to edit this campaign" if @campaign.nil?
+    end
+
     # Never trust parameters from the scary internet, only allow the white list through.
     def campaign_params
       params.require(:campaign).permit(:description)
     end
-end
+$end
